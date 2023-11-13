@@ -183,10 +183,7 @@ void execute_command(int *mask, char *args[])
         is_myls(mask);
     }
     else if (execvp(args[0], args) == -1)
-    {
-        perror("Erreur d'exécution de la commande");
-        exit(EXIT_FAILURE);
-    }
+        handle_error("Erreur d'exécution de la commande", -1);
 }
 
 int main()
@@ -243,14 +240,11 @@ int main()
                     exit(1);
                 }
 
-                // BUG : n'execute pas le 2eme ls de ls && ls alors qu'il devrait
-                if (i + 1 < command_count && strcmp(command[i + 1], "&&") == 0)
+                // Check if the command failed (non-zero exit status)
+                if (WIFEXITED(wstatus) && WEXITSTATUS(wstatus) != 0)
                 {
-                    if (WIFEXITED(wstatus) != 0)
-                    {
-                        printf("oui\n");
-                        i = command_count; // Ignorer la commande suivante si la précédente a réussi
-                    }
+                    printf("Command failed. Skipping subsequent commands.\n");
+                    break; // Stop executing subsequent commands
                 }
             }
         }
