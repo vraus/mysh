@@ -241,10 +241,13 @@ int main()
                 }
 
                 // Check if the command failed (non-zero exit status)
-                if (WIFEXITED(wstatus) && WEXITSTATUS(wstatus) != 0)
+                if (i + 1 < command_count && strcmp(command[i + 1], "&&") == 0)
                 {
-                    printf("Command failed. Skipping subsequent commands.\n");
-                    break; // Stop executing subsequent commands
+                    if (WIFEXITED(wstatus) && WEXITSTATUS(wstatus) != 0)
+                    {
+                        printf("Command failed. Skipping subsequent commands.\n");
+                        break; // Stop executing subsequent commands
+                    }
                 }
             }
         }
