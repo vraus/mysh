@@ -249,7 +249,7 @@ int main()
                         break; // Stop executing subsequent commands
                     }
                 }
-                if (i + 1 < command_count && strcmp(command[i + 1], "||") == 0)
+                else if (i + 1 < command_count && strcmp(command[i + 1], "||") == 0)
                 {
                     if (WIFEXITED(wstatus) && WEXITSTATUS(wstatus) == 0)
                     {
