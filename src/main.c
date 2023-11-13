@@ -87,15 +87,15 @@ void tokenize(char *str, char *commands[], int *command_count)
     int len = strlen(str), i = 0, j;
     for (j = 0; j < len; j++)
     {
-        if (j + 1 < len && str[j] == '&')
+        if (j - 1 > 0 && (str[j] == '&' || str[j] == '|'))
         {
-            if (str[j - 1] != '&')
+            if (str[j - 1] == ' ')
             {
                 str[j - 1] = '\0';
             }
             // handle_error_noexit("&&: tokenize");
         }
-        if (str[j] == ';' || (str[j - 1] == '&' && str[j] != '&'))
+        if (j - 1 > 0 && (str[j] == ';' || (str[j - 1] == '&' && str[j] != '&') || (str[j - 1] == '|' && str[j] != '|')))
         {
             str[j] = '\0';
         }
@@ -217,7 +217,7 @@ int main()
         pid_t child_pids[command_count];
         for (int i = 0; i < command_count; i++)
         {
-            if (strcmp(command[i], "&&") == 0 || strcmp(command[i], "&") == 0)
+            if (strcmp(command[i], "&&") == 0 || strcmp(command[i], "&") == 0 || strcmp(command[i], "||") == 0)
             {
                 continue;
             }
@@ -246,6 +246,13 @@ int main()
                     if (WIFEXITED(wstatus) && WEXITSTATUS(wstatus) != 0)
                     {
                         printf("Command failed. Skipping subsequent commands.\n");
+                        break; // Stop executing subsequent commands
+                    }
+                }
+                if (i + 1 < command_count && strcmp(command[i + 1], "||") == 0)
+                {
+                    if (WIFEXITED(wstatus) && WEXITSTATUS(wstatus) == 0)
+                    {
                         break; // Stop executing subsequent commands
                     }
                 }
