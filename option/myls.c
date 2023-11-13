@@ -60,7 +60,7 @@ void affiche(int totalBlocks, int num_files, char **file_names, struct stat st)
 
   for (int i = 0; i < num_files; i++)
   {
-    if (stat(file_names[i], &st) == 0)
+    if (lstat(file_names[i], &st) == 0)
     {
       struct passwd *pw = getpwuid(st.st_uid);
       struct group *gr = getgrgid(st.st_gid);
@@ -103,16 +103,16 @@ void files(char *cwd, int *num_files, int *max_files, char **file_names, int has
     exit(1);
   }
 
-  if (stat(cwd, &st) == -1)
+  if (lstat(cwd, &st) == -1)
   {
-    perror("stat");
+    perror("lstat");
     exit(EXIT_FAILURE);
   }
 
   // Parcours du répertoire courant
   while ((entry = readdir(dir)) != NULL)
   {
-    if (stat(entry->d_name, &st) == 0)
+    if (lstat(entry->d_name, &st) == 0)
     {
       int blocks = (st.st_size + blockSize - 1) / blockSize;
       totalBlocks += blocks;
