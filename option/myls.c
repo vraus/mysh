@@ -95,8 +95,8 @@ void files(char *cwd, int *num_files, int *max_files, char **file_names, int has
   int totalBlocks = 0;
   int blockSize = 1024; // Taille d'un bloc de disque (modif 512)
 
+  // BUG: /Documents/SE/projet/mysh2/mysh/option$ ./myls ERROR OPENDIR: File name too long
   DIR *dir = opendir(cwd);
-
   if (dir == NULL)
   {
     perror("ERROR OPENDIR");
@@ -116,18 +116,19 @@ void files(char *cwd, int *num_files, int *max_files, char **file_names, int has
     {
       int blocks = (st.st_size + blockSize - 1) / blockSize;
       totalBlocks += blocks;
-      /*if (S_ISDIR(st.st_mode) && !hasR)
-      {
-        char full_path[1024];
-        strcpy(full_path, cwd);
-        strcat(full_path, "/");
-        strcat(full_path, entry->d_name);
-        files(full_path, num_files, max_files, file_names, hasA, hasR);
-      }*/
     }
 
     if (entry->d_name[0] == '.' && !hasA)
       continue;
+
+    /*if (!hasR && S_ISDIR(st.st_mode))
+    {
+      // Si l'option -R est spécifiée et c'est un répertoire, appeler récursivement la fonction
+      char *full_path = malloc(strlen(cwd) + strlen(entry->d_name) + 2);
+      sprintf(full_path, "%s/%s", cwd, entry->d_name);
+      files(full_path, num_files, max_files, file_names, hasA, hasR);
+      free(full_path);
+    }*/
 
     if (*num_files == *max_files)
     { // le tableau est plein

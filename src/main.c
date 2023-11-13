@@ -217,6 +217,7 @@ int main()
         pid_t child_pids[command_count];
         for (int i = 0; i < command_count; i++)
         {
+            // TODO: transformer ce if en switch
             if (strcmp(command[i], "&&") == 0 || strcmp(command[i], "&") == 0 || strcmp(command[i], "||") == 0)
             {
                 continue;
