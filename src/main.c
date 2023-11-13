@@ -242,9 +242,16 @@ int main()
                     perror("Error waitpid");
                     exit(1);
                 }
-                /*if ((strcmp(command[i + 1], "&&") == 0) && WIFEXITED(wstatus))
+
+                // BUG : n'execute pas le 2eme ls de ls && ls alors qu'il devrait
+                if (i + 1 < command_count && strcmp(command[i + 1], "&&") == 0)
                 {
-                }*/
+                    if (WIFEXITED(wstatus) != 0)
+                    {
+                        printf("oui\n");
+                        i = command_count; // Ignorer la commande suivante si la précédente a réussi
+                    }
+                }
             }
         }
     }
