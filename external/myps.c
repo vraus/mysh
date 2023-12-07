@@ -42,7 +42,29 @@ void print_process_info(int pid)
     if (fgets(cmdline, sizeof(cmdline), cmdline_file) == NULL)
         handle_error("fgets (cmdline)", -1);
 
-    printf("%-10d %-10d %-10d %-10s %-20s %-30s\n", uid, process_id, parent_id, stat, name, cmdline);
+    switch (stat[0])
+    {
+    case 'R':
+        printf(GREEN);
+        break;
+    case 'D':
+        printf(MAGENTA);
+        break;
+    case 'S':
+        printf(RED);
+        break;
+    case 'T':
+        printf(BLUE);
+        break;
+    case 'Z':
+        printf(MAGENTA);
+        break;
+    default:
+        printf(DEFAULT);
+        break;
+    }
+
+    printf("%-10d %-10d %-10d %-10s %-20s %-30s\n" DEFAULT, uid, process_id, parent_id, stat, name, cmdline);
 }
 
 int main(int arc, char *argv[])
@@ -66,6 +88,5 @@ int main(int arc, char *argv[])
         }
     }
     closedir(proc_dir);
-
     return 0;
 }
