@@ -1,13 +1,14 @@
 {
     "configurations": [
-      {
-        "name": "Linux",
-        "includePath": ["${workspaceFolder}/**"],
-        "defines": [],
-        "compilerPath": "/usr/bin/gcc",
-        "cStandard": "c11"
-      }
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": [],
+            "cStandard": "c11",
+            "compilerPath": "/usr/bin/gcc"
+        }
     ],
     "version": 4
-  }
-  
+}
