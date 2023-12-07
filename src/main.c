@@ -147,7 +147,7 @@ void hasOption(char **args, int *mask)
 void is_myls(int *mask)
 {
     char *myls_args[4];
-    myls_args[0] = "./option/myls";
+    myls_args[0] = "./external/myls";
 
     int arg_count = 1;
 
@@ -170,6 +170,16 @@ void is_myls(int *mask)
     }
 }
 
+void is_myps()
+{
+    char *args[2];
+    args[0] = "./external/myps";
+    args[1] = NULL;
+
+    if (execvp(args[0], args) == -1)
+        handle_error("execl (myps)", -1);
+}
+
 /**
  * @brief c'est ici que les execvp sont fait
  * @param mask `int *` permet de savoir quelles options du myls sont utilisées
@@ -182,6 +192,8 @@ void execute_command(int *mask, char *args[])
         hasOption(args, mask);
         is_myls(mask);
     }
+    else if (strcmp(args[0], "myps") == 0)
+        is_myps();
     else if (execvp(args[0], args) == -1)
         handle_error("Erreur d'exécution de la commande", -1);
 }
