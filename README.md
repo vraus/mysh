@@ -10,7 +10,15 @@
 
     1. [V-0.1.111023](#v-01111023)
 
+    1. [V-0.2.071223](#v-02171223)
+
 1. [Workspace Organization](#workspace-organization)
+
+    1. [Plugins](#plugins)
+
+1. [Scripts](#scripts)
+
+    1. [Background Test Script](#background-test-script)
 
 ## How to Use
 
@@ -30,6 +38,24 @@ make && ./main
 
 You will then be able to access the prompt of the mysh. You don't have a lot of usable commands at this state of the project. Only the most basic UNIX commands you can think of, and the `myls` command that is supposed to work as a normal `ls` command.
 
+### V-0.2.171223
+
+This new version allows you to use commun logical characters like in a everyday terminal. Using `&&` will execute the second part if the first part succeed, and `||` will execute the second part if the first one fails.
+
+Also implemented `&` to execute the command as background command. To test this you can, while in the tiny-shell, you can use our [test script](#background-test-script) using the following command:
+
+```bash
+/mysh > ./test_script.sh & echo "hello"
+```
+
+And a brand new external program: the `myps` callable with:
+
+```bash
+/mysh > myps
+```
+
+There are no args for this program. Just type this to have a lighter for collorful version of the `ps aux` command.
+
 ## Workspace Organization
 
 ### Plugins
@@ -43,3 +69,17 @@ We use this extension available on the marketplace of VSCode to organize the wor
 Simple documentation on how to use TODO comment and configure in the workspace can be found [here](https://thomasventurini.com/articles/the-best-way-to-work-with-todos-in-vscode/).
 
 Also interesting if we want to use icons, the list of all supported icons can be found [here](https://microsoft.github.io/vscode-codicons/dist/codicon.html).
+
+## Scripts
+
+### Background test script
+
+The purpose of this test script is to demonstrate the functionality of the `&` command in our terminal. The script is straightforward and involves a 10-second sleep before printing "Awake!" on the screen.
+
+```bash
+#!/bin/bash
+
+echo "Start sleeping for 10 seconds"
+sleep 10
+echo "Awake!"
+```
