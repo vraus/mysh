@@ -1,6 +1,6 @@
 # MySH - M1 SE
 
-> **Authors**: *Ugo Courche* & *Hadrien Belleville*
+> **Authors**: *Ugo Courche (#BaKeMoNo0)* & *Hadrien Belleville (#Vraus)*
 >
 > **Date of the first commit**: *October 11, 2023*
 
