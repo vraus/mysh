@@ -22,14 +22,14 @@
 #define handle_error(msg, status) \
     do                            \
     {                             \
-        perror(msg);              \
+        perror(RESET msg);        \
         exit(status);             \
     } while (0)
 
 #define handle_error_noexit(msg) \
     do                           \
     {                            \
-        perror(msg);             \
+        perror(RESET msg);       \
     } while (0)
 
 /**
@@ -43,9 +43,7 @@ void getcommand(char *str)
     while ((ch = getchar()) != EOF)
     {
         if (ch == '\n')
-        {
             break;
-        }
 
         str[i++] = (char)ch;
     }
@@ -70,9 +68,7 @@ void tokenize_space(char *str, char *args[])
     for (j = 0; j < len; j++)
     {
         if (str[j] == ' ' || str[j] == '\t')
-        {
             str[j] = '\0'; // Remplace les espaces et les tabulations par des terminaisons nulles
-        }
         else if (j == 0 || str[j - 1] == '\0')
         {
             args[i] = &str[j]; // Pointe vers le début de chaque argument
@@ -93,12 +89,10 @@ void tokenize(char *str, char *commands[], int *command_count)
             {
                 str[j - 1] = '\0';
             }
-            // handle_error_noexit("&&: tokenize");
         }
+
         if (j - 1 > 0 && (str[j] == ';' || (str[j - 1] == '&' && str[j] != '&') || (str[j - 1] == '|' && str[j] != '|')))
-        {
             str[j] = '\0';
-        }
         else if (j == 0 || str[j - 1] == '\0')
         {
             commands[i] = &str[j]; // Pointe vers le début de chaque argument
@@ -121,7 +115,6 @@ void hasOption(char **args, int *mask)
     for (int i = 0; args[i] != NULL; i++)
         argc++;
 
-    // [x]: I think it works now
     while ((opt = getopt(argc, args, "Ra")) != -1)
     {
         switch (opt)
@@ -152,14 +145,10 @@ void is_myls(int *mask)
     int arg_count = 1;
 
     if (*mask & (1 << 0))
-    {
         myls_args[arg_count++] = "-a";
-    }
 
     if (*mask & (1 << 1))
-    {
         myls_args[arg_count++] = "-R";
-    }
 
     myls_args[arg_count] = NULL;
 
@@ -204,6 +193,7 @@ int main()
     int wstatus, command_count = 0;
     int mask = 0x000;
 
+    pid_t bg_pid;
     for (;;)
     {
         char cwd[1024];
@@ -229,48 +219,70 @@ int main()
         pid_t child_pids[command_count];
         for (int i = 0; i < command_count; i++)
         {
-            // TODO: transformer ce if en switch
-            if (strcmp(command[i], "&&") == 0 || strcmp(command[i], "&") == 0 || strcmp(command[i], "||") == 0)
+            if (strcmp(command[i], "&&") == 0 || strcmp(command[i], "||") == 0 || strcmp(command[i], "&") == 0)
             {
                 continue;
             }
             else
             {
-                child_pids[i] = fork();
-                if (child_pids[i] == -1)
+                if (i + 1 < command_count && strcmp(command[i + 1], "&") == 0)
                 {
-                    perror("fork");
-                    exit(1);
-                }
-                if (child_pids[i] == 0)
-                {
-                    tokenize_space(command[i], args);
-                    execute_command(&mask, args);
-                }
-                if (waitpid(child_pids[i], &wstatus, 0) < 0)
-                {
-                    perror("Error waitpid");
-                    exit(1);
-                }
+                    if ((bg_pid = fork()) == -1)
+                        handle_error_noexit("fork (bg_pid)");
 
-                // Check if the command failed (non-zero exit status)
-                if (i + 1 < command_count && strcmp(command[i + 1], "&&") == 0)
-                {
-                    if (WIFEXITED(wstatus) && WEXITSTATUS(wstatus) != 0)
+                    if (bg_pid == 0)
                     {
-                        printf("Command failed. Skipping subsequent commands.\n");
-                        break; // Stop executing subsequent commands
+                        tokenize_space(command[i], args);
+                        execute_command(&mask, args);
+                        exit(EXIT_SUCCESS); // Make sure the bg_pid exits
                     }
+                    else
+                        printf(GREEN "Background command %s started with PID: %d\n" RESET, command[i], bg_pid);
                 }
-                else if (i + 1 < command_count && strcmp(command[i + 1], "||") == 0)
+                else
                 {
-                    if (WIFEXITED(wstatus) && WEXITSTATUS(wstatus) == 0)
+                    child_pids[i] = fork();
+                    if (child_pids[i] == -1)
+                        handle_error("fork (childs_pid)", -1);
+                    if (child_pids[i] == 0)
                     {
-                        break; // Stop executing subsequent commands
+                        tokenize_space(command[i], args);
+                        execute_command(&mask, args);
+                    }
+                    else
+                    {
+                        if (waitpid(child_pids[i], &wstatus, 0) < 0)
+                            handle_error("Error waitpid", -1);
+
+                        // Check if the command failed (non-zero exit status)
+                        if (i + 1 < command_count && strcmp(command[i + 1], "&&") == 0)
+                        {
+                            if (WIFEXITED(wstatus) && WEXITSTATUS(wstatus) != 0)
+                            {
+                                printf("Command failed. Skipping subsequent commands.\n");
+                                break; // Stop executing subsequent commands
+                            }
+                        }
+                        else if (i + 1 < command_count && strcmp(command[i + 1], "||") == 0)
+                        {
+                            if (WIFEXITED(wstatus) && WEXITSTATUS(wstatus) == 0)
+                                break; // Stop executing subsequent commands
+                        }
                     }
                 }
             }
         }
     }
+
+    // Wait for the last background process to complete
+    if (bg_pid > 0)
+    {
+        if (waitpid(bg_pid, &wstatus, 0) < 0)
+        {
+            perror("Error waitpid");
+            exit(EXIT_FAILURE);
+        }
+    }
+
     return 0;
 }

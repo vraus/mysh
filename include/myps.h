@@ -17,7 +17,7 @@
 #define handle_error(msg, status) \
     do                            \
     {                             \
-        perror(msg);              \
+        perror(DEFAULT msg);      \
         exit(status);             \
     } while (0)
 
