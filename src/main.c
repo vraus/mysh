@@ -7,6 +7,7 @@
 #include <ctype.h>
 #include <getopt.h>
 
+// colors for the prints
 #define RESET "\x1b[0m"
 #define BLACK "\x1b[30m"
 #define RED "\x1b[31m"
@@ -33,56 +34,76 @@
     } while (0)
 
 /**
- * @brief `void` Récupère la commande saisie par l'utilisateur
- * @param str `char *`la commande
- */
-void getcommand(char *str)
-{
-    int i = 0, ch;
-
-    while ((ch = getchar()) != EOF)
-    {
-        if (ch == '\n')
-            break;
-
-        str[i++] = (char)ch;
-    }
-
-    if (ferror(stdin))
-    {
-        perror("Erreur de lecture");
-        exit(EXIT_FAILURE);
-    }
-    str[i] = '\0';
-}
-
-/**
- * @brief `void` Permet de fragmenter la commande saisie par l'utilisateur en plusieur chaine de charactère
- * qui sont récupérer dans un tableau de chaine de caractère
- * @param str `char *` la commande
- * @param args `char *` tableau contenant les mots de la commande
+ * @brief Tokenizes a command string into an array of arguments based on space and tab characters.
+ *
+ * This function fragments a command string into multiple strings based on spaces and tabs.
+ * It populates the 'args' array with pointers to individual arguments.
+ *
+ * @param str `char *` The command string to tokenize.
+ * @param args `char **` Array to store pointers to individual arguments.
  */
 void tokenize_space(char *str, char *args[])
 {
     int len = strlen(str), j, i = 0;
     for (j = 0; j < len; j++)
     {
+        // Replace spaces and tabs with null terminators
         if (str[j] == ' ' || str[j] == '\t')
-            str[j] = '\0'; // Remplace les espaces et les tabulations par des terminaisons nulles
+            str[j] = '\0';
         else if (j == 0 || str[j - 1] == '\0')
         {
-            args[i] = &str[j]; // Pointe vers le début de chaque argument
+            args[i] = &str[j]; // Point to the beginning of each argument
             i++;
         }
     }
-    args[i] = NULL;
+
+    args[i] = NULL; // Null-terminate the arguments array
 }
 
+/**
+ * @brief Tokenizes a command string into an array of arguments based on space and tab characters.
+ *
+ * This function fragments a command string into multiple strings based on spaces and tabs.
+ * It populates the 'args' array with pointers to individual arguments.
+ *
+ * @param str `char *` The command string to tokenize.
+ * @param args `char **` Array to store pointers to individual arguments.
+ */
+void tokenize_space(char *str, char *args[])
+{
+    int len = strlen(str), j, i = 0;
+    for (j = 0; j < len; j++)
+    {
+        // Replace spaces and tabs with null terminators
+        if (str[j] == ' ' || str[j] == '\t')
+            str[j] = '\0';
+        else if (j == 0 || str[j - 1] == '\0')
+        {
+            args[i] = &str[j]; // Point to the beginning of each argument
+            i++;
+        }
+    }
+
+    args[i] = NULL; // Null-terminate the arguments array
+}
+
+/**
+ * @brief Tokenizes a command string into an array of commands.
+ *
+ * This function tokenizes a command string based on special characters ('&', '|', ';').
+ * It modifies the input string and populates the 'commands' array with pointers to individual commands.
+ * The 'command_count' variable is updated to reflect the number of commands found.
+ *
+ * @param str `char *` The command string to tokenize.
+ * @param commands `char **` Array to store pointers to individual commands.
+ * @param command_count `int *` Variable to store the number of commands found.
+ */
 void tokenize(char *str, char *commands[], int *command_count)
 {
     int len = strlen(str), i = 0, j;
     for (j = 0; j < len; j++)
     {
+        // Handle cases where '&' or '|' follows a space
         if (j - 1 > 0 && (str[j] == '&' || str[j] == '|'))
         {
             if (str[j - 1] == ' ')
@@ -91,51 +112,58 @@ void tokenize(char *str, char *commands[], int *command_count)
             }
         }
 
+        // Handle cases where ';' or a single '&' or '|' is encountered
         if (j - 1 > 0 && (str[j] == ';' || (str[j - 1] == '&' && str[j] != '&') || (str[j - 1] == '|' && str[j] != '|')))
             str[j] = '\0';
         else if (j == 0 || str[j - 1] == '\0')
         {
-            commands[i] = &str[j]; // Pointe vers le début de chaque argument
+            commands[i] = &str[j]; // Point to the beginning of each argument
             i++;
         }
     }
+
     *command_count = i;
-    commands[i] = NULL;
+    commands[i] = NULL; // Null-terminate the commands array
 }
 
 /**
- * @brief `void` Permet de savoir quelle option a été saisie par l'utilisateur en modifiant la variable correspondante
- * @param args `char **` tableau contenant les mots de la commande
- * @param mask `int *` permet de savoir quelles options du myls sont utilisées
+ * @brief Modifies the bitmask to indicate the options entered by the user.
+ * @param args `char **` Array containing command words.
+ * @param mask `int *` Bitmask indicating options for the myls command.
  */
 void hasOption(char **args, int *mask)
 {
     int opt, argc = 0;
 
+    // Count the number of arguments
     for (int i = 0; args[i] != NULL; i++)
         argc++;
 
+    // Parse options using getopt
     while ((opt = getopt(argc, args, "Ra")) != -1)
     {
         switch (opt)
         {
         case 'a':
+            // Set the '-a' option in the bitmask
             *mask |= (1 << 0);
             break;
         case 'R':
+            // Set the '-R' option in the bitmask
             *mask |= (1 << 1);
             break;
 
         default:
-            printf("Invalid option.\n");
+            // Print an error message for invalid options
+            printf(RED "Invalid option.\n" RESET);
             break;
         }
     }
 }
 
 /**
- * @brief `void` si la commande saisi par l'utilisateur est myls, l'exécute
- * @param mask `int *` permet de savoir quelles options du myls sont utilisées
+ * @brief Executes the "myls" command if entered by the user.
+ * @param mask `int *` Bitmask indicating options for the myls command.
  */
 void is_myls(int *mask)
 {
@@ -144,47 +172,52 @@ void is_myls(int *mask)
 
     int arg_count = 1;
 
+    // Check if the '-a' option is set in the mask
     if (*mask & (1 << 0))
         myls_args[arg_count++] = "-a";
 
+    // Check if the '-R' option is set in the mask
     if (*mask & (1 << 1))
         myls_args[arg_count++] = "-R";
 
     myls_args[arg_count] = NULL;
 
+    // Execute the external "myls" program with specified options
     if (execvp(myls_args[0], myls_args) == -1)
-    {
-        perror("execvp");
-        exit(1);
-    }
+        handle_error("execvp", -1);
 }
 
+/**
+ * @brief Called by `execute_command` when the user enters `myps` in the terminal.
+ * `myps` is an external program similar to the `ps aux` command in bash.
+ */
 void is_myps()
 {
     char *args[2];
     args[0] = "./external/myps";
     args[1] = NULL;
 
+    // Execute external "myps" programm
     if (execvp(args[0], args) == -1)
         handle_error("execl (myps)", -1);
 }
 
 /**
- * @brief c'est ici que les execvp sont fait
- * @param mask `int *` permet de savoir quelles options du myls sont utilisées
- * @param args `char **` tableau contenant les mots de la commande
+ * @brief Executes commands using execvp.
+ * @param mask `int *` Bitmask indicating options for the myls command.
+ * @param args `char **` Array containing command arguments.
  */
 void execute_command(int *mask, char *args[])
 {
-    if (strcmp(args[0], "myls") == 0)
+    if (strcmp(args[0], "myls") == 0) // Check if the command is "myls"
     {
-        hasOption(args, mask);
-        is_myls(mask);
+        hasOption(args, mask); // Parse options for the "myls" command
+        is_myls(mask);         // Execute the "myls" command with specified options
     }
-    else if (strcmp(args[0], "myps") == 0)
-        is_myps();
-    else if (execvp(args[0], args) == -1)
-        handle_error("Erreur d'exécution de la commande", -1);
+    else if (strcmp(args[0], "myps") == 0) // Check if the command is "myps"
+        is_myps();                         // Execute the "myps" command
+    else if (execvp(args[0], args) == -1)  // If it's neither "myls" nor "myps", execute the command using execvp
+        handle_error("Command execution error", -1);
 }
 
 int main()
@@ -193,57 +226,64 @@ int main()
     int wstatus, command_count = 0;
     int mask = 0x000;
 
-    pid_t bg_pid;
+    pid_t bg_pid; // pid for background process
     for (;;)
     {
         char cwd[1024];
         getcwd(cwd, sizeof(cwd));
 
-        mask = 0x000; // Remise à 0 du mask
+        mask = 0x000; // Reset the mask
 
+        // Detecting the mysh part of the working dir
         char *project = strstr(cwd, "/mysh");
         if (project != NULL)
             printf(BLUE " %s > " RESET, project);
         else
             printf(GREEN " > ");
 
-        // Lire la commande de l'utilisateur
+        // Read the user's command
         getcommand(input);
         if (strcmp(input, "exit") == 0)
         {
-            break; // Quitter le mini-shell
+            break; // Exit the tinyshell
         }
 
+        // Tokenizes the command into individual commands
         tokenize(input, command, &command_count);
 
+        // Array to store child process PIDs
         pid_t child_pids[command_count];
+        // Loop through each command of the input
         for (int i = 0; i < command_count; i++)
         {
+            // Skip logical operators
             if (strcmp(command[i], "&&") == 0 || strcmp(command[i], "||") == 0 || strcmp(command[i], "&") == 0)
-            {
                 continue;
-            }
             else
             {
+                // Check if the command is intented to run in the background
                 if (i + 1 < command_count && strcmp(command[i + 1], "&") == 0)
                 {
+                    // Fork the new process for the bg command
                     if ((bg_pid = fork()) == -1)
                         handle_error_noexit("fork (bg_pid)");
 
+                    // Child process: executes the bg command
                     if (bg_pid == 0)
                     {
                         tokenize_space(command[i], args);
                         execute_command(&mask, args);
                         exit(EXIT_SUCCESS); // Make sure the bg_pid exits
                     }
-                    else
-                        printf(GREEN "Background command %s started with PID: %d\n" RESET, command[i], bg_pid);
                 }
                 else
                 {
+                    // Fork a new process for the foreground command
                     child_pids[i] = fork();
                     if (child_pids[i] == -1)
                         handle_error("fork (childs_pid)", -1);
+
+                    // Child process: Executes forground command
                     if (child_pids[i] == 0)
                     {
                         tokenize_space(command[i], args);
@@ -251,6 +291,7 @@ int main()
                     }
                     else
                     {
+                        // Parent process: Wait for the child to finish and check for logical operators
                         if (waitpid(child_pids[i], &wstatus, 0) < 0)
                             handle_error("Error waitpid", -1);
 
