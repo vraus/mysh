@@ -34,30 +34,31 @@
     } while (0)
 
 /**
- * @brief Tokenizes a command string into an array of arguments based on space and tab characters.
+ * @brief Retrieves the command entered by the user.
  *
- * This function fragments a command string into multiple strings based on spaces and tabs.
- * It populates the 'args' array with pointers to individual arguments.
- *
- * @param str `char *` The command string to tokenize.
- * @param args `char **` Array to store pointers to individual arguments.
+ * @param str Pointer to a character array to store the command.
  */
-void tokenize_space(char *str, char *args[])
+void getcommand(char *str)
 {
-    int len = strlen(str), j, i = 0;
-    for (j = 0; j < len; j++)
+    int i = 0, ch;
+
+    // Read characters from standard input until newline or EOF
+    while ((ch = getchar()) != EOF)
     {
-        // Replace spaces and tabs with null terminators
-        if (str[j] == ' ' || str[j] == '\t')
-            str[j] = '\0';
-        else if (j == 0 || str[j - 1] == '\0')
-        {
-            args[i] = &str[j]; // Point to the beginning of each argument
-            i++;
-        }
+        if (ch == '\n')
+            break; // Exit the loop when a newline character is encountered
+
+        str[i++] = (char)ch; // Store the character in the command string
     }
 
-    args[i] = NULL; // Null-terminate the arguments array
+    // Check for errors in reading from stdin
+    if (ferror(stdin))
+    {
+        perror("Error reading input");
+        exit(EXIT_FAILURE);
+    }
+
+    str[i] = '\0'; // Null-terminate the command string
 }
 
 /**
