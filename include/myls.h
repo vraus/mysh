@@ -65,4 +65,4 @@ void files(char *cwd, int *num_files, int *max_files, char **file_names, int has
  */
 void hasOption(int argc, char **argv, int *hasA, int *hasR);
 
-#endif // MYLS_H
+#endif

@@ -5,7 +5,7 @@ int compare(const void *a, const void *b)
   const char *str1 = *(const char **)a;
   const char *str2 = *(const char **)b;
 
-  // passer le caractère tant que c'est un '.'
+  // Skip characters while they are dots ('.')
   while (*str1 != '\0' && *str1 == '.')
   {
     str1++;
@@ -15,7 +15,7 @@ int compare(const void *a, const void *b)
     str2++;
   }
 
-  // Convertir les caractères en minuscules avant de comparer
+  // Convert characters to lowercase before comparing
   char c1, c2;
   while (*str1 != '\0' && *str2 != '\0')
   {
@@ -36,7 +36,7 @@ int compare(const void *a, const void *b)
 
 const char *get_permissions_string(mode_t mode)
 {
-  static char perms[10]; // Utilisation d'un tableau local au lieu d'un tableau statique
+  static char perms[10]; // Use a local array instead of a static array
 
   perms[0] = (S_ISDIR(mode)) ? 'd' : '-';
   perms[1] = (mode & S_IRUSR) ? 'r' : '-';
@@ -54,8 +54,8 @@ const char *get_permissions_string(mode_t mode)
 
 void affiche(int totalBlocks, int num_files, char **file_names, struct stat st)
 {
-  static const char *noms_mois[] = {"jan", "feb", "mar", "apr", "may", "jun",
-                                    "jul", "aug", "sep", "oct", "nov", "dec"};
+  static const char *month_names[] = {"jan", "feb", "mar", "apr", "may", "jun",
+                                      "jul", "aug", "sep", "oct", "nov", "dec"};
   printf("total %d\n", totalBlocks);
 
   for (int i = 0; i < num_files; i++)
@@ -65,9 +65,9 @@ void affiche(int totalBlocks, int num_files, char **file_names, struct stat st)
       struct passwd *pw = getpwuid(st.st_uid);
       struct group *gr = getgrgid(st.st_gid);
 
-      char nom_mois[10]; // Pour stocker le nom du mois
-      // Utilisation de strftime pour extraire le nom du mois
-      strftime(nom_mois, sizeof(nom_mois), "%b", localtime(&st.st_mtime));
+      char month_name[10]; // To store the name of the month
+      // Use strftime to extract the name of the month
+      strftime(month_name, sizeof(month_name), "%b", localtime(&st.st_mtime));
 
       printf("%s %lu ", get_permissions_string(st.st_mode), st.st_nlink);
       if (pw != NULL && gr != NULL)
@@ -78,7 +78,7 @@ void affiche(int totalBlocks, int num_files, char **file_names, struct stat st)
         printf("%s %s ", user_name, group_name);
       }
       printf("%7ld  %s. %2d %02d:%02d ", st.st_size,
-             noms_mois[localtime(&st.st_mtime)->tm_mon],
+             month_names[localtime(&st.st_mtime)->tm_mon],
              localtime(&st.st_mtime)->tm_mday, localtime(&st.st_mtime)->tm_hour,
              localtime(&st.st_mtime)->tm_min);
     }
@@ -109,7 +109,7 @@ void files(char *cwd, int *num_files, int *max_files, char **file_names, int has
     exit(EXIT_FAILURE);
   }
 
-  // Parcours du répertoire courant
+  // Traverse the current directory
   while ((entry = readdir(dir)) != NULL)
   {
     if (lstat(entry->d_name, &st) == 0)
@@ -123,7 +123,7 @@ void files(char *cwd, int *num_files, int *max_files, char **file_names, int has
 
     /*if (!hasR && S_ISDIR(st.st_mode))
     {
-      // Si l'option -R est spécifiée et c'est un répertoire, appeler récursivement la fonction
+      // If the -R option is specified and it's a directory, call the function recursively
       char *full_path = malloc(strlen(cwd) + strlen(entry->d_name) + 2);
       sprintf(full_path, "%s/%s", cwd, entry->d_name);
       files(full_path, num_files, max_files, file_names, hasA, hasR);
@@ -131,17 +131,17 @@ void files(char *cwd, int *num_files, int *max_files, char **file_names, int has
     }*/
 
     if (*num_files == *max_files)
-    { // le tableau est plein
+    { // The array is full
       *max_files *= 2;
       file_names = (char **)realloc(file_names, *max_files * sizeof(char *));
       if (file_names == NULL)
       {
-        perror("Erreur d'allocation mémoire");
+        perror("Memory allocation error");
         exit(1);
       }
     }
-    file_names[(*num_files)++] = strdup(entry->d_name); // duplique la chaîne de caractères dans le tableau et
-                                                        // alloue une nouvelle zone de mémoire
+    file_names[(*num_files)++] = strdup(entry->d_name); // Duplicate the string into the array and
+                                                        // allocate a new memory zone
   }
 
   if (closedir(dir) == -1)
@@ -151,7 +151,7 @@ void files(char *cwd, int *num_files, int *max_files, char **file_names, int has
   }
 
   qsort(file_names, *num_files, sizeof(char *),
-        compare); // trier par ordre aphabétique
+        compare); // Sort alphabetically
 
   affiche(totalBlocks, *num_files, file_names, st);
   free(cwd);
@@ -163,11 +163,11 @@ void hasOption(int argc, char **argv, int *hasA, int *hasR)
   {
     if (strcmp(argv[i], "-a") == 0)
     {
-      *hasA = 1;
+      *hasA = 1; // Set hasA to 1 if the -a option is present.
     }
     else if (strcmp(argv[i], "-R") == 0)
     {
-      *hasR = 1;
+      *hasR = 1; // Set hasR to 1 if the -R option is present.
     }
   }
 }
