@@ -1,3 +1,6 @@
+# Visual Studio Code directory
+.vscode/*
+
 # Prerequisites
 *.d
 
@@ -35,6 +38,9 @@
 *.i*86
 *.x86_64
 *.hex
+main
+external/myls
+external/myps
 
 # Debug files
 *.dSYM/
