@@ -21,7 +21,6 @@
 
 #define COMMAND_LENGTH 2048
 #define MAX_VARIABLES 100
-#define MAX_NAME_LENGTH 50
 #define MAX_VALUE_LENGTH 100
 
 #define handle_error(msg, status) \
@@ -42,6 +41,36 @@ struct Variable
     char name[MAX_VARIABLES];
     char value[MAX_VALUE_LENGTH];
 };
+
+/**
+ * @brief Unsets (removes) a local variable from the array of variables
+ *
+ * @param variables Pointer to the array of local variables
+ * @param _name Name of the variable to unset
+ */
+void unset_local_variables(struct Variable *variables, char *_name)
+{
+    for (int i = 0; i < MAX_VARIABLES; i++)
+    {
+        if (strcmp(variables[i].name, _name) == 0)
+        {
+            // Variable found, remove it by shifting remaining elements
+            for (int j = i; j < MAX_VARIABLES - 1; ++j)
+            {
+                strcpy(variables[j].name, variables[j + 1].name);
+                strcpy(variables[j].value, variables[j + 1].value);
+            }
+
+            // Clear the last element
+            variables[MAX_VARIABLES - 1].name[0] = '\0';
+            variables[MAX_VARIABLES - 1].value[0] = '\0';
+
+            return;
+        }
+    }
+
+    handle_error_noexit("Error: Variable not found.\n");
+}
 
 /**
  * @brief Sets or updates a local variable in the array of variables
@@ -316,17 +345,22 @@ void execute_command(int *mask, char *args[], struct Variable *variables)
         is_myps();                         // Execute the "myps" command
     else if (strcmp(args[0], "set") == 0)
     {
-        if (args[1] != NULL && args[2] != NULL)
-        {
-            char *name = args[1];
-            char *value = args[3];
-            set_local_variable(variables, name, value);
-        }
+        if (args[1] != NULL && args[2] != NULL && args[3] != NULL)
+            set_local_variable(variables, args[1], args[3]);
+        else
+            handle_error_noexit("set:" RED " Bad usage. " RESET "set <name>=<value>");
+    }
+    else if (strcmp(args[0], "unset") == 0)
+    {
+        if (args[1] != NULL)
+            unset_local_variables(variables, args[1]);
+        else
+            handle_error_noexit("unset:" RED " Bad usage. " RESET "unset <name>");
     }
     else if (strcmp(args[0], "print") == 0)
         print_variables(variables);
     else if (execvp(args[0], args) == -1) // If it's neither "myls" nor "myps", execute the command using execvp
-        handle_error("Command execution error", -1);
+        handle_error_noexit("Command execution error");
 }
 
 int main()
