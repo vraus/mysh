@@ -2,9 +2,35 @@
 #define LOCAL_VARIABLES_HANDLER_H
 
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+// colors for the prints
+#define RESET "\x1b[0m"
+#define RED "\x1b[31m"
+#define GREEN "\x1b[32m"
+#define YELLOW "\x1b[33m"
+#define BLUE "\x1b[34m"
+#define MAGENTA "\x1b[35m"
+#define CYAN "\x1b[36m"
 
 #define MAX_VARIABLES 100
 #define MAX_VALUE_LENGTH 100
+
+#define handle_error(msg, status) \
+    do                            \
+    {                             \
+        perror(RED msg RESET);    \
+        exit(status);             \
+    } while (0)
+
+#define handle_error_noexit(msg) \
+    do                           \
+    {                            \
+        perror(RED msg RESET);   \
+    } while (0)
 
 struct Variable
 {
