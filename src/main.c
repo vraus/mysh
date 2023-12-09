@@ -17,15 +17,53 @@
 #define NUM_SHM 1664
 #define NUM_MUTEX 31
 
+int mutex, shmid;
+key_t shm_key;
+struct Variable *global_variables;
+
 struct sembuf P = {0, -1, 0};
 struct sembuf V = {0, +1, 0};
+
+void kill_handler(int n)
+{
+    struct sembuf remove = {0, 1, IPC_RMID};
+
+    // Remove the semaphore
+    if (semop(mutex, &remove, 1) == -1)
+        handle_error("Problem during detachment of the mutex", -1);
+
+    // Detach shared memory
+    if (shmdt(global_variables) == -1)
+        handle_error("Problem during detachment of shared memory", -1);
+
+    // Remove shared memory
+    if (shmctl(shmid, IPC_RMID, NULL) == -1)
+        handle_error("Problem during removal of shared memory", -1);
+
+    exit(EXIT_SUCCESS);
+}
+
+void setup_shared_memory()
+{
+    // Create or obtain the key for shared memory
+    if ((shm_key = ftok(NAME_FILE, NUM_SHM)) == ERR)
+        handle_error("ftok shared memory", -1);
+
+    // Create or obtain the ID of the shared memory segment
+    if ((shmid = shmget(shm_key, MAX_VARIABLES * sizeof(struct Variable), 0666 | IPC_CREAT)) == -1)
+        handle_error("shmget", -1);
+
+    // Attach shared memory
+    if ((global_variables = shmat(shmid, NULL, 0)) == (void *)-1)
+        handle_error("shmat", -1);
+}
 
 /**
  * @brief Executes commands using execvp.
  * @param mask `int *` Bitmask indicating options for the myls command.
  * @param args `char **` Array containing command arguments.
  */
-void execute_command(int *mask, char *args[], struct Variable *variables, int mutex)
+void execute_command(int *mask, char *args[], struct Variable *variables, struct Variable *global_variables, int mutex)
 {
     if (strcmp(args[0], "myls") == 0) // Check if the command is "myls"
     {
@@ -50,18 +88,27 @@ void execute_command(int *mask, char *args[], struct Variable *variables, int mu
     }
     else if (strcmp(args[0], "setenv") == 0)
     {
-        if (semop(mutex, &P, 1) == -1)
-            handle_error_noexit("Problem during P operation on the mutex");
-        printf("mutex allow you to talk.\n");
-        if (semop(mutex, &V, 1) == -1)
-            handle_error_noexit("Problem during V operation on the mutex");
+        if (args[1] != NULL && args[2] != NULL && args[3] != NULL)
+        {
+            if (semop(mutex, &P, 1) == -1)
+                handle_error_noexit("Problem during P operation on the mutex");
+            set_local_variable(global_variables, args[1], args[3]);
+            if (semop(mutex, &V, 1) == -1)
+                handle_error_noexit("Problem during V operation on the mutex");
+        }
     }
     else if (strcmp(args[0], "echo") == 0)
     {
-        if (args[1][0] == '$')
+        if (semop(mutex, &P, 1) == -1)
+            handle_error_noexit("Problem during P operation on the mutex");
+        print_variable(global_variables, args[1]);
+        if (semop(mutex, &V, 1) == -1)
+            handle_error_noexit("Problem during V operation on the mutex");
+
+        /*if (args[1][0] == '$')
             print_variable(variables, args[1]);
         else if (execvp(args[0], args) == -1)
-            handle_error_noexit("Command execution error");
+            handle_error_noexit("Command execution error");*/
     }
     else if (execvp(args[0], args) == -1) // If it's neither "myls" nor "myps", execute the command using execvp
         handle_error_noexit("Command execution error");
@@ -69,9 +116,11 @@ void execute_command(int *mask, char *args[], struct Variable *variables, int mu
 
 int main()
 {
-    key_t key = ftok("/tmp", 's'), k;
-    int shmid = shmget(key, MAX_VARIABLES * sizeof(struct Variable), 0666 | IPC_CREAT);
-    int mutex;
+    key_t k;
+
+    signal(SIGINT, kill_handler);
+
+    setup_shared_memory();
 
     if ((k = ftok(NAME_FILE, NUM_MUTEX)) == ERR)
         handle_error("ftok mutex", -1);
@@ -92,14 +141,8 @@ int main()
     else
         handle_error("Probleme during mutex creation", -1);
 
-    if (shmid == -1)
-        handle_error("shmget", -1);
-
-    struct Variable *global_variables = shmat(shmid, NULL, 0);
-    if ((long)global_variables == -1)
-        handle_error("shmat", -1);
-
-    struct Variable *variables = (struct Variable *)calloc(MAX_VARIABLES, sizeof(struct Variable));
+    // struct Variable *variables = (struct Variable *)calloc(MAX_VARIABLES, sizeof(struct Variable));
+    struct Variable variables[MAX_VARIABLES];
 
     char input[COMMAND_LENGTH], *command[COMMAND_LENGTH], *args[20];
     int wstatus, command_count = 0;
@@ -151,7 +194,7 @@ int main()
                     if (bg_pid == 0)
                     {
                         tokenize_space(command[i], args);
-                        execute_command(&mask, args, variables, mutex);
+                        execute_command(&mask, args, variables, global_variables, mutex);
                         exit(EXIT_SUCCESS); // Make sure the bg_pid exits
                     }
                 }
@@ -166,7 +209,7 @@ int main()
                     if (child_pids[i] == 0)
                     {
                         tokenize_space(command[i], args);
-                        execute_command(&mask, args, variables, mutex);
+                        execute_command(&mask, args, variables, global_variables, mutex);
                     }
                     else
                     {
@@ -206,6 +249,16 @@ int main()
 
     if (semctl(mutex, 1, IPC_RMID) == -1)
         handle_error("Problem during detachment of the mutex", -1);
+
+    // Detach shared memory
+    if (shmdt(global_variables) == -1)
+        handle_error("Problem during detachment of shared memory", -1);
+
+    // Remove shared memory
+    if (shmctl(shmid, IPC_RMID, NULL) == -1)
+        handle_error("Problem during removal of shared memory", -1);
+
+    return 0;
 
     return 0;
 }
