@@ -5,10 +5,12 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/shm.h>
+#include <sys/sem.h>
 #include <ctype.h>
 #include <getopt.h>
 #include <stdbool.h>
 #include <signal.h>
+#include <errno.h>
 
 // colors for the prints
 #define RESET "\x1b[0m"
@@ -23,6 +25,11 @@
 #define MAX_VARIABLES 100
 #define MAX_VALUE_LENGTH 100
 
+#define ERR -1
+#define NAME_FILE "/bin/bash"
+#define NUM_SHM 1664
+#define NUM_MUTEX 31
+
 #define handle_error(msg, status) \
     do                            \
     {                             \
@@ -36,11 +43,19 @@
         perror(RED msg RESET);   \
     } while (0)
 
+struct sembuf P = {0, -1, 0};
+struct sembuf V = {0, +1, 0};
+
 struct Variable
 {
     char name[MAX_VARIABLES];
     char value[MAX_VALUE_LENGTH];
 };
+
+void kill_handler(int n)
+{
+    return;
+}
 
 /**
  * @brief Unsets (removes) a local variable from the array of variables
@@ -355,7 +370,7 @@ void is_myps()
  * @param mask `int *` Bitmask indicating options for the myls command.
  * @param args `char **` Array containing command arguments.
  */
-void execute_command(int *mask, char *args[], struct Variable *variables)
+void execute_command(int *mask, char *args[], struct Variable *variables, int mutex)
 {
     if (strcmp(args[0], "myls") == 0) // Check if the command is "myls"
     {
@@ -378,6 +393,14 @@ void execute_command(int *mask, char *args[], struct Variable *variables)
         else
             handle_error_noexit("unset: Bad usage: unset <name>");
     }
+    else if (strcmp(args[0], "setenv") == 0)
+    {
+        if (semop(mutex, &P, 1) == -1)
+            handle_error_noexit("Problem during P operation on the mutex");
+        printf("mutex allow you to talk.\n");
+        if (semop(mutex, &V, 1) == -1)
+            handle_error_noexit("Problem during V operation on the mutex");
+    }
     else if (strcmp(args[0], "echo") == 0)
     {
         if (args[1][0] == '$')
@@ -391,6 +414,36 @@ void execute_command(int *mask, char *args[], struct Variable *variables)
 
 int main()
 {
+    key_t key = ftok("/tmp", 's'), k;
+    int shmid = shmget(key, MAX_VARIABLES * sizeof(struct Variable), 0666 | IPC_CREAT);
+    int mutex;
+
+    if ((k = ftok(NAME_FILE, NUM_MUTEX)) == ERR)
+        handle_error("ftok mutex", -1);
+
+    // Attempts to create the mutex
+    if ((mutex = semget(k, 1, 0666 | IPC_CREAT | IPC_EXCL)) != ERR)
+    {
+        // The mutex was created, initialize it with the value 1
+        if (semctl(mutex, 0, SETVAL, 1) == ERR)
+            handle_error("Problem during initialization of semaphore mutex", -1);
+    }
+    else if (errno == EEXIST)
+    {
+        // Semaphore already exists, obtain it without reinitializing
+        if ((mutex = semget(k, 1, 0666)) == ERR)
+            handle_error("Problem obtaining mutex", -1);
+    }
+    else
+        handle_error("Probleme during mutex creation", -1);
+
+    if (shmid == -1)
+        handle_error("shmget", -1);
+
+    struct Variable *global_variables = shmat(shmid, NULL, 0);
+    if ((long)global_variables == -1)
+        handle_error("shmat", -1);
+
     struct Variable *variables = (struct Variable *)calloc(MAX_VARIABLES, sizeof(struct Variable));
 
     char input[COMMAND_LENGTH], *command[COMMAND_LENGTH], *args[20];
@@ -443,7 +496,7 @@ int main()
                     if (bg_pid == 0)
                     {
                         tokenize_space(command[i], args);
-                        execute_command(&mask, args, variables);
+                        execute_command(&mask, args, variables, mutex);
                         exit(EXIT_SUCCESS); // Make sure the bg_pid exits
                     }
                 }
@@ -458,7 +511,7 @@ int main()
                     if (child_pids[i] == 0)
                     {
                         tokenize_space(command[i], args);
-                        execute_command(&mask, args, variables);
+                        execute_command(&mask, args, variables, mutex);
                     }
                     else
                     {
@@ -495,6 +548,9 @@ int main()
             exit(EXIT_FAILURE);
         }
     }
+
+    if (semctl(mutex, 1, IPC_RMID) == -1)
+        handle_error("Problem during detachment of the mutex", -1);
 
     return 0;
 }
