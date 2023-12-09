@@ -42,7 +42,7 @@ void getcommand(char *str);
  * @param ch the character to check
  * @return true if the character is a space or tab, false otherwise
  */
-bool is_space_or_tab(char ch) { return ch == ' ' || ch == '\t'; }
+bool is_space_or_tab(char ch);
 
 /**
  * @brief Tokenizes a command string into an array of arguments based on space and tab characters.

@@ -156,3 +156,5 @@ void is_myps()
     if (execvp(args[0], args) == -1)
         handle_error("execl (myps)", -1);
 }
+
+bool is_space_or_tab(char ch) { return ch == ' ' || ch == '\t'; }
