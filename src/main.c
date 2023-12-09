@@ -4,9 +4,11 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/shm.h>
 #include <ctype.h>
 #include <getopt.h>
 #include <stdbool.h>
+#include <signal.h>
 
 // colors for the prints
 #define RESET "\x1b[0m"
@@ -18,6 +20,9 @@
 #define CYAN "\x1b[36m"
 
 #define COMMAND_LENGTH 2048
+#define MAX_VARIABLES 100
+#define MAX_NAME_LENGTH 50
+#define MAX_VALUE_LENGTH 100
 
 #define handle_error(msg, status) \
     do                            \
@@ -31,6 +36,33 @@
     {                            \
         perror(RESET msg);       \
     } while (0)
+
+struct Variable
+{
+    char name[MAX_VARIABLES];
+    char value[MAX_VALUE_LENGTH];
+};
+
+void set_local_variable(struct Variable *variables, char *_name, char *_value)
+{
+    for (int i = 0; i < MAX_VARIABLES; ++i)
+    {
+        if (variables[i].name[0] == '\0' || strcmp(variables[i].name, _name) == 0)
+        {
+            strcpy(variables[i].name, _name);
+            strcpy(variables[i].value, _value);
+            return;
+        }
+    }
+    handle_error_noexit("Error: Maximum number of local variables reached.\n");
+}
+
+void print_variables(struct Variable *variables)
+{
+    printf("Local Variables:\n");
+    for (int i = 0; i < MAX_VARIABLES && variables[i].name[0] != '\0'; ++i)
+        printf("%s = %s\n", variables[i].name, variables[i].value);
+}
 
 /**
  * @brief Retrieves the command entered by the user.
@@ -235,7 +267,7 @@ void is_myps()
  * @param mask `int *` Bitmask indicating options for the myls command.
  * @param args `char **` Array containing command arguments.
  */
-void execute_command(int *mask, char *args[])
+void execute_command(int *mask, char *args[], struct Variable *variables)
 {
     if (strcmp(args[0], "myls") == 0) // Check if the command is "myls"
     {
@@ -245,13 +277,24 @@ void execute_command(int *mask, char *args[])
     else if (strcmp(args[0], "myps") == 0) // Check if the command is "myps"
         is_myps();                         // Execute the "myps" command
     else if (strcmp(args[0], "set") == 0)
-        printf("args[0]:%s, args[1]:%s, args[2]:%s, args[3]:%s\n", args[0], args[1], args[2], args[3]);
+    {
+        if (args[1] != NULL && args[2] != NULL)
+        {
+            char *name = args[1];
+            char *value = args[3];
+            set_local_variable(variables, name, value);
+        }
+    }
+    else if (strcmp(args[0], "print") == 0)
+        print_variables(variables);
     else if (execvp(args[0], args) == -1) // If it's neither "myls" nor "myps", execute the command using execvp
         handle_error("Command execution error", -1);
 }
 
 int main()
 {
+    struct Variable *variables = (struct Variable *)calloc(MAX_VARIABLES, sizeof(struct Variable));
+
     char input[COMMAND_LENGTH], *command[COMMAND_LENGTH], *args[20];
     int wstatus, command_count = 0;
     int mask = 0x000;
@@ -302,7 +345,7 @@ int main()
                     if (bg_pid == 0)
                     {
                         tokenize_space(command[i], args);
-                        execute_command(&mask, args);
+                        execute_command(&mask, args, variables);
                         exit(EXIT_SUCCESS); // Make sure the bg_pid exits
                     }
                 }
@@ -317,7 +360,7 @@ int main()
                     if (child_pids[i] == 0)
                     {
                         tokenize_space(command[i], args);
-                        execute_command(&mask, args);
+                        execute_command(&mask, args, variables);
                     }
                     else
                     {
