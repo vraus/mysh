@@ -58,8 +58,31 @@ void set_local_variable(struct Variable *variables, char *_name, char *_value)
         if (variables[i].name[0] == '\0' || strcmp(variables[i].name, _name) == 0)
         {
             // Set or update the variable
-            strcpy(variables[i].name, _name);
-            strcpy(variables[i].value, _value);
+            if (_value[0] == '$')
+            {
+                char *var_name = (char *)calloc(strlen(_value), sizeof(char));
+                strcpy(var_name, _value + 1);
+                var_name[strlen(var_name)] = '\0';
+
+                bool found = false;
+
+                for (int j = 0; j < MAX_VARIABLES; ++j)
+                {
+                    if (strcmp(variables[j].name, var_name) == 0)
+                    {
+                        strcpy(variables[i].name, _name);
+                        strcpy(variables[i].value, variables[j].value);
+                        found = true;
+                    }
+                }
+                if (!found)
+                    handle_error("Error: unknown variable name. Nothing is done.", -1);
+            }
+            else
+            {
+                strcpy(variables[i].name, _name);
+                strcpy(variables[i].value, _value);
+            }
             return;
         }
     }
