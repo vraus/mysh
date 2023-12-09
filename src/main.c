@@ -24,6 +24,8 @@ struct Variable *global_variables;
 struct sembuf P = {0, -1, 0};
 struct sembuf V = {0, +1, 0};
 
+// BUG: Only one TTY must shmdt and shmctl on shared memory.
+//  We must ensure that the TTY that calls kill_handler is the last to use the shared memory
 void kill_handler(int n)
 {
     struct sembuf remove = {0, 1, IPC_RMID};
