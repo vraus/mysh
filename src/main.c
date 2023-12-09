@@ -26,14 +26,14 @@
 #define handle_error(msg, status) \
     do                            \
     {                             \
-        perror(RESET msg);        \
+        perror(RED msg RESET);    \
         exit(status);             \
     } while (0)
 
 #define handle_error_noexit(msg) \
     do                           \
     {                            \
-        perror(RESET msg);       \
+        perror(RED msg RESET);   \
     } while (0)
 
 struct Variable
@@ -72,6 +72,15 @@ void unset_local_variables(struct Variable *variables, char *_name)
     handle_error_noexit("Error: Variable not found.\n");
 }
 
+char *extract_var_name(char *_name)
+{
+    char *var_name = (char *)calloc(strlen(_name), sizeof(char));
+    strcpy(var_name, _name + 1);
+    var_name[strlen(var_name)] = '\0';
+
+    return var_name;
+}
+
 /**
  * @brief Sets or updates a local variable in the array of variables
  *
@@ -89,10 +98,7 @@ void set_local_variable(struct Variable *variables, char *_name, char *_value)
             // Set or update the variable
             if (_value[0] == '$')
             {
-                char *var_name = (char *)calloc(strlen(_value), sizeof(char));
-                strcpy(var_name, _value + 1);
-                var_name[strlen(var_name)] = '\0';
-
+                char *var_name = extract_var_name(_value);
                 bool found = false;
 
                 for (int j = 0; j < MAX_VARIABLES; ++j)
@@ -105,7 +111,7 @@ void set_local_variable(struct Variable *variables, char *_name, char *_value)
                     }
                 }
                 if (!found)
-                    handle_error("Error: unknown variable name. Nothing is done.", -1);
+                    handle_error("Error: Unknown variable name. Nothing is done.", -1);
             }
             else
             {
@@ -124,11 +130,19 @@ void set_local_variable(struct Variable *variables, char *_name, char *_value)
  *
  * @param variables Pointer to the array of local variables
  */
-void print_variables(struct Variable *variables)
+void print_variable(struct Variable *variables, char *_name)
 {
-    printf("Local Variables:\n");
+    char *var_name = extract_var_name(_name);
     for (int i = 0; i < MAX_VARIABLES && variables[i].name[0] != '\0'; ++i)
-        printf("%s = %s\n", variables[i].name, variables[i].value);
+    {
+        if (strcmp(variables[i].name, var_name) == 0)
+        {
+            printf("%s\n", variables[i].value);
+            return;
+        }
+    }
+
+    handle_error_noexit("Error: Unknown variable name.");
 }
 
 /**
@@ -348,17 +362,22 @@ void execute_command(int *mask, char *args[], struct Variable *variables)
         if (args[1] != NULL && args[2] != NULL && args[3] != NULL)
             set_local_variable(variables, args[1], args[3]);
         else
-            handle_error_noexit("set:" RED " Bad usage. " RESET "set <name>=<value>");
+            handle_error_noexit("set: Bad usage: set <name>=<value>");
     }
     else if (strcmp(args[0], "unset") == 0)
     {
         if (args[1] != NULL)
             unset_local_variables(variables, args[1]);
         else
-            handle_error_noexit("unset:" RED " Bad usage. " RESET "unset <name>");
+            handle_error_noexit("unset: Bad usage: unset <name>");
     }
-    else if (strcmp(args[0], "print") == 0)
-        print_variables(variables);
+    else if (strcmp(args[0], "echo") == 0)
+    {
+        if (args[1][0] == '$')
+            print_variable(variables, args[1]);
+        else if (execvp(args[0], args) == -1)
+            handle_error_noexit("Command execution error");
+    }
     else if (execvp(args[0], args) == -1) // If it's neither "myls" nor "myps", execute the command using execvp
         handle_error_noexit("Command execution error");
 }
