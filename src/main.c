@@ -6,6 +6,7 @@
 #include <sys/wait.h>
 #include <ctype.h>
 #include <getopt.h>
+#include <stdbool.h>
 
 // colors for the prints
 #define RESET "\x1b[0m"
@@ -60,6 +61,14 @@ void getcommand(char *str)
 }
 
 /**
+ * @brief Checks if a character is a space or tab
+ *
+ * @param ch the character to check
+ * @return true if the character is a space or tab, false otherwise
+ */
+bool is_space_or_tab(char ch) { return ch == ' ' || ch == '\t'; }
+
+/**
  * @brief Tokenizes a command string into an array of arguments based on space and tab characters.
  *
  * This function fragments a command string into multiple strings based on spaces and tabs.
@@ -71,16 +80,36 @@ void getcommand(char *str)
 void tokenize_space(char *str, char *args[])
 {
     int len = strlen(str), j, i = 0;
-    for (j = 0; j < len; j++)
+
+    for (j = 0; j < len; ++j)
     {
-        // Replace spaces and tabs with null terminators
-        if (str[j] == ' ' || str[j] == '\t')
-            str[j] = '\0';
-        else if (j == 0 || str[j - 1] == '\0')
+        // Skip consecutive spaces or tabs
+        while (is_space_or_tab(str[j]))
+            ++j;
+
+        if (j == len)
+            break;
+
+        // Point to the beginning of each argument
+        args[i] = &str[j];
+
+        // Find the end of the current argument
+        while ((j < len) && (!is_space_or_tab(str[j])))
         {
-            args[i] = &str[j]; // Point to the beginning of each argument
-            i++;
+            if (str[j] == '=')
+            {
+                // If '=' is encountered null-terminate the current argument
+                str[j] = '\0';
+                args[++i] = "=";
+                args[++i] = &str[++j]; // Continue parsing from the position agter '='
+                continue;
+            }
+            ++j;
         }
+
+        // Null-terminate the argument
+        str[j] = '\0';
+        ++i;
     }
 
     args[i] = NULL; // Null-terminate the arguments array
@@ -215,7 +244,9 @@ void execute_command(int *mask, char *args[])
     }
     else if (strcmp(args[0], "myps") == 0) // Check if the command is "myps"
         is_myps();                         // Execute the "myps" command
-    else if (execvp(args[0], args) == -1)  // If it's neither "myls" nor "myps", execute the command using execvp
+    else if (strcmp(args[0], "set") == 0)
+        printf("args[0]:%s, args[1]:%s, args[2]:%s, args[3]:%s\n", args[0], args[1], args[2], args[3]);
+    else if (execvp(args[0], args) == -1) // If it's neither "myls" nor "myps", execute the command using execvp
         handle_error("Command execution error", -1);
 }
 
