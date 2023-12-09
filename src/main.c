@@ -8,9 +8,10 @@
 #include <sys/sem.h>
 #include <ctype.h>
 #include <getopt.h>
-#include <stdbool.h>
 #include <signal.h>
 #include <errno.h>
+
+#include "../include/local_variables_handler.h"
 
 // colors for the prints
 #define RESET "\x1b[0m"
@@ -22,8 +23,6 @@
 #define CYAN "\x1b[36m"
 
 #define COMMAND_LENGTH 2048
-#define MAX_VARIABLES 100
-#define MAX_VALUE_LENGTH 100
 
 #define ERR -1
 #define NAME_FILE "/bin/bash"
@@ -46,125 +45,9 @@
 struct sembuf P = {0, -1, 0};
 struct sembuf V = {0, +1, 0};
 
-struct Variable
-{
-    char name[MAX_VARIABLES];
-    char value[MAX_VALUE_LENGTH];
-};
-
 void kill_handler(int n)
 {
     return;
-}
-
-/**
- * @brief Unsets (removes) a local variable from the array of variables
- *
- * @param variables Pointer to the array of local variables
- * @param _name Name of the variable to unset
- */
-void unset_local_variables(struct Variable *variables, char *_name)
-{
-    for (int i = 0; i < MAX_VARIABLES; i++)
-    {
-        if (strcmp(variables[i].name, _name) == 0)
-        {
-            // Variable found, remove it by shifting remaining elements
-            for (int j = i; j < MAX_VARIABLES - 1; ++j)
-            {
-                strcpy(variables[j].name, variables[j + 1].name);
-                strcpy(variables[j].value, variables[j + 1].value);
-            }
-
-            // Clear the last element
-            variables[MAX_VARIABLES - 1].name[0] = '\0';
-            variables[MAX_VARIABLES - 1].value[0] = '\0';
-
-            return;
-        }
-    }
-
-    handle_error_noexit("Error: Variable not found.\n");
-}
-
-/**
- * @brief Method to extract the name in a reference ($var)
- *
- * @param _name The variable reference (with '$')
- * @return The var name without the '$' reference.
- */
-char *extract_var_name(char *_name)
-{
-    char *var_name = (char *)calloc(strlen(_name), sizeof(char));
-    strcpy(var_name, _name + 1);
-    var_name[strlen(var_name)] = '\0';
-
-    return var_name;
-}
-
-/**
- * @brief Sets or updates a local variable in the array of variables
- *
- * @param variables Pointer to the array of local variables
- * @param _name Name of the variable to set
- * @param _value Value to associate with the variable
- */
-void set_local_variable(struct Variable *variables, char *_name, char *_value)
-{
-    for (int i = 0; i < MAX_VARIABLES; ++i)
-    {
-        // Check if the current slot is empty or if the variable with the same name exists
-        if (variables[i].name[0] == '\0' || strcmp(variables[i].name, _name) == 0)
-        {
-            // Set or update the variable
-            if (_value[0] == '$')
-            {
-                char *var_name = extract_var_name(_value);
-                bool found = false;
-
-                for (int j = 0; j < MAX_VARIABLES; ++j)
-                {
-                    if (strcmp(variables[j].name, var_name) == 0)
-                    {
-                        strcpy(variables[i].name, _name);
-                        strcpy(variables[i].value, variables[j].value);
-                        found = true;
-                    }
-                }
-                if (!found)
-                    handle_error("Error: Unknown variable name. Nothing is done.", -1);
-            }
-            else
-            {
-                strcpy(variables[i].name, _name);
-                strcpy(variables[i].value, _value);
-            }
-            return;
-        }
-    }
-    // HuuHoo... something went wrong ...
-    handle_error_noexit("Error: Maximum number of local variables reached.\n");
-}
-
-/**
- * @brief Prints the local variable stored in the array
- *
- * @param variables Pointer to the array of local variables
- * @param _name Name of the variable you want to print its value
- */
-void print_variable(struct Variable *variables, char *_name)
-{
-    char *var_name = extract_var_name(_name);
-    for (int i = 0; i < MAX_VARIABLES && variables[i].name[0] != '\0'; ++i)
-    {
-        if (strcmp(variables[i].name, var_name) == 0)
-        {
-            printf("%s\n", variables[i].value);
-            return;
-        }
-    }
-
-    handle_error_noexit("Error: Unknown variable name.");
 }
 
 /**
