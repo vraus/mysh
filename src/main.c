@@ -43,20 +43,35 @@ struct Variable
     char value[MAX_VALUE_LENGTH];
 };
 
+/**
+ * @brief Sets or updates a local variable in the array of variables
+ *
+ * @param variables Pointer to the array of local variables
+ * @param _name Name of the variable to set
+ * @param _value Value to associate with the variable
+ */
 void set_local_variable(struct Variable *variables, char *_name, char *_value)
 {
     for (int i = 0; i < MAX_VARIABLES; ++i)
     {
+        // Check if the current slot is empty or if the variable with the same name exists
         if (variables[i].name[0] == '\0' || strcmp(variables[i].name, _name) == 0)
         {
+            // Set or update the variable
             strcpy(variables[i].name, _name);
             strcpy(variables[i].value, _value);
             return;
         }
     }
+    // HuuHoo... something went wrong ...
     handle_error_noexit("Error: Maximum number of local variables reached.\n");
 }
 
+/**
+ * @brief Prints the local variables stored in the array
+ *
+ * @param variables Pointer to the array of local variables
+ */
 void print_variables(struct Variable *variables)
 {
     printf("Local Variables:\n");
