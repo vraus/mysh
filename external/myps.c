@@ -39,11 +39,14 @@ void print_process_info(int pid)
         handle_error("fopen (cmdline)", -1);
 
     char cmdline[32];
-    if (fgets(cmdline, sizeof(cmdline), cmdline_file) == NULL)
+    if (fgets(cmdline, sizeof(cmdline), cmdline_file) < 0)
         handle_error("fgets (cmdline)", -1);
 
     switch (stat[0])
     {
+    case 'I':
+        printf(CYAN);
+        break;
     case 'R':
         printf(GREEN);
         break;
@@ -67,7 +70,7 @@ void print_process_info(int pid)
     printf("%-10d %-10d %-10d %-10s %-20s %-30s\n" DEFAULT, uid, process_id, parent_id, stat, name, cmdline);
 }
 
-int main(int arc, char *argv[])
+int main(int argc, char *argv[])
 {
     DIR *proc_dir = opendir("/proc");
 
