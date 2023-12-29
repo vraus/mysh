@@ -3,6 +3,13 @@
 > **Authors**: *Ugo Courche (#BaKeMoNo0)* & *Hadrien Belleville (#Vraus)*
 >
 > **Date of the first commit**: *October 11, 2023*
+>
+> **Contributions**:
+> |                      | Commits | Additions | Deletions | Global |
+> |:-------------------- |:-------:|:---------:|:---------:|-------:|
+> | **Ugo Courche**      |20 (26%) |1530 (43%) |479 (29%)  |**33%** |
+> |**Hadrien Belleville**|58 (74%) |2060 (57%) |1199 (71%) |**67%** |
+> | **Total**            |  **78** |  **3590** |  **1678** |**100%**|
 
 ## Table of Content
 
@@ -11,6 +18,14 @@
     1. [V-0.1.111023](#v-01111023)
 
     1. [V-0.2.071223](#v-02171223)
+
+1. [Features](#features)
+
+    1. [Implemented Features](#implemented)
+
+    1. [Non-Implemented Features](#non-implemented)
+
+1. [Bugs](#bugs)
 
 1. [Workspace Organization](#workspace-organization)
 
@@ -55,6 +70,14 @@ And a brand new external program: the `myps` callable with:
 ```
 
 There are no args for this program. Just type this to have a lighter for collorful version of the `ps aux` command.
+
+## Features
+
+### Implemented
+
+### Non-Implemented
+
+## Bugs
 
 ## Workspace Organization
 
