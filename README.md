@@ -47,29 +47,63 @@ You will then be able to access the prompt of the mysh. You don't have a lot of 
 
 #### 2.1 Sequencing commands
 
+In our code, the `main` function reads the user's input, tokenizes it into individual commands, and then iterates through each command. For each command, a child process is forked, and the command is executed using `execvp`.
+
+The parent process `waits` for the child to finish before proceeding to the next command. The logic also handles logical operators (`&&`, `||`) to determine whether to execute subsequent commands based on the success or failure of the previous command.
+
 #### 2.2 Wildcards
+
+The wildcard handling is implemented in the `execute_command_with_wildcards` function in the `wildcard_handler.c` file. It uses the `fnmatch` function to match the given pattern with the files in the current directory. If a match is found, a new process is forked to execute the command with the matched file as an argument.
 
 #### 3.4 myls
 
+The `myls` functionality is implemented as an external program in the `myls.c` file.
+
+It opens the current directory, retrieves information about files and directories, and prints the details in a format similar to `ls -l`.
+
+It also supports `-a` option for displaying hidden files, but `-R`, for recursive listing, does not works.
+
 #### 3.5 myps
+
+The `myps` functionality is implemented as an external program in the `myps.c` file.
+
+It reads information about each process from the `/proc/<pid>/status` and `/proc/<pid>/cmdline` files and prints following details: `UID`, `PID`, `PPID`, `STAT`, `NAME`, and `COMMAND`.
+
+The main function in `myps.c` opens the `/proc` directory, iterates through process entries, and calls `print_process_info` for each process.
 
 #### 5 Background Command
 
+The code supports running commands in the background if the user appends an `&` at the end of the command. This is achieved by forking a child process to execute the background command, while the parent continues to read and execute subsequent commands.
+
+To demonstrate the functionality, we've created a [background test script](#background-test-script) you can use by running `./test_script.sh &` in the tinyshell.
+
 #### 6.1 Global Variables
+
+Global variables are implemented using shared memory. The `setup_shared_memory` function in the main function creates or obtains a key for shared memory, creates or obtains the ID of the shared memory segment, and attaches the shared memory.
+
+Global variables are then accessed through the `global_variables` pointer.
 
 #### 6.2 Local Variables
 
+Local variables are implemented using an array of `struct Variable` in the `local_variables_handler.c` file. Functions such as `set_local_variable` and `unset_local_variables` modify this array based on user commands.
+
 #### 6.3 Usage of Variables
+
+Variables are used in the code to store and retrieve values. For example, in the `set_local_variable` function, if the value of a variable is another variable (e.g., `$var`), the code retrieves the value of `var` and assigns it to the new variable.
+
+You can for example use `echo $a` which will print the value inside of variable `a`.
 
 ### Non-Implemented
 
-#### 3.3 Return code of processus
+> Following, the list of non-implemented features in our tinyshell
 
-#### 4.2 Redirection to or from a file
++ 3.3 Return code of processus
 
-#### 5.1 `myjobs`
++ 4.2 Redirection to or from a file
 
-#### 5.2 `Ctrl-Z`
++ 5.1 `myjobs`
+
++ 5.2 `Ctrl-Z`
 
 ## Bugs
 
