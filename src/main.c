@@ -112,8 +112,6 @@ void execute_command(int *mask, char *args[], struct Variable *variables, struct
     }
     else if (strcmp(args[0], "echo") == 0)
     {
-        // print_variable(global_variables, args[1]);
-
         if (args[1][0] == '$')
         {
             if (semop(mutex, &P, 1) == -1)
