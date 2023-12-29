@@ -97,6 +97,8 @@ You can for example use `echo $a` which will print the value inside of variable 
 
 > Following, the list of non-implemented features in our tinyshell
 
++ Changing Directories
+
 + 3.3 Return code of processus
 
 + 4.2 Redirection to or from a file
@@ -109,7 +111,13 @@ You can for example use `echo $a` which will print the value inside of variable 
 
 ### 3.1 Changing Directories
 
+As we did not make any external program to handle a `mycd`, any `cd` command is handled with `execvp` which doesn't work for this specific command inside the tinyshell.
+
 ### 3.2 Exiting with `Ctrl-C`
+
+Exiting the tinyshell with `Ctrl-C` is allowed, threads, semaphores and shared memory are badly closed when using a `SIGINT`.
+
+The `kill_handler` function in the `main.c` file tryes to access the global `sem`, `shmd` and pthreads, but doesn't seem to succeed at closing and joining them.
 
 ### 4.1 Pipes
 
