@@ -112,16 +112,18 @@ void execute_command(int *mask, char *args[], struct Variable *variables, struct
     }
     else if (strcmp(args[0], "echo") == 0)
     {
-        if (semop(mutex, &P, 1) == -1)
-            handle_error_noexit("Problem during P operation on the mutex");
-        print_variable(global_variables, args[1]);
-        if (semop(mutex, &V, 1) == -1)
-            handle_error_noexit("Problem during V operation on the mutex");
+        // print_variable(global_variables, args[1]);
 
-        /*if (args[1][0] == '$')
+        if (args[1][0] == '$')
+        {
+            if (semop(mutex, &P, 1) == -1)
+                handle_error_noexit("Problem during P operation on the mutex");
             print_variable(variables, args[1]);
+            if (semop(mutex, &V, 1) == -1)
+                handle_error_noexit("Problem during V operation on the mutex");
+        }
         else if (execvp(args[0], args) == -1)
-            handle_error_noexit("Command execution error");*/
+            handle_error_noexit("Command execution error");
     }
     else if (execvp(args[0], args) == -1) // If it's neither "myls" nor "myps", execute the command using execvp
         handle_error_noexit("Command execution error");

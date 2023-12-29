@@ -15,10 +15,6 @@
 
 1. [How to Use](#how-to-use)
 
-    1. [V-0.1.111023](#v-01111023)
-
-    1. [V-0.2.071223](#v-02171223)
-
 1. [Features](#features)
 
     1. [Implemented Features](#implemented)
@@ -37,14 +33,6 @@
 
 ## How to Use
 
-> How to read the versions name: V-X.Y.Z
->
-> + X: This indicates the major version. It is incremented for significant changes that may introduce backward-incompatible features.
-> + Y: This is the minor version. It is typically incremented for smaller, backward-compatible changes or feature additions.
-> + Z: This represents the patch version. It is used for bug fixes or small improvements that are backward-compatible. In our case this will always be the date of the first commit of the patch version.
-
-### V-0.1.111023
-
 In order to use the `MySH` at the current state, you only have to run the following command.
 
 ```bash
@@ -53,31 +41,43 @@ make && ./main
 
 You will then be able to access the prompt of the mysh. You don't have a lot of usable commands at this state of the project. Only the most basic UNIX commands you can think of, and the `myls` command that is supposed to work as a normal `ls` command.
 
-### V-0.2.171223
-
-This new version allows you to use commun logical characters like in a everyday terminal. Using `&&` will execute the second part if the first part succeed, and `||` will execute the second part if the first one fails.
-
-Also implemented `&` to execute the command as background command. To test this you can, while in the tiny-shell, you can use our [test script](#background-test-script) using the following command:
-
-```bash
-/mysh > ./test_script.sh & echo "hello"
-```
-
-And a brand new external program: the `myps` callable with:
-
-```bash
-/mysh > myps
-```
-
-There are no args for this program. Just type this to have a lighter for collorful version of the `ps aux` command.
-
 ## Features
 
 ### Implemented
 
+#### 2.1 Sequencing commands
+
+#### 2.2 Wildcards
+
+#### 3.4 myls
+
+#### 3.5 myps
+
+#### 5 Background Command
+
+#### 6.1 Global Variables
+
+#### 6.2 Local Variables
+
+#### 6.3 Usage of Variables
+
 ### Non-Implemented
 
+#### 3.3 Return code of processus
+
+#### 4.2 Redirection to or from a file
+
+#### 5.1 `myjobs`
+
+#### 5.2 `Ctrl-Z`
+
 ## Bugs
+
+### 3.1 Changing Directories
+
+### 3.2 Exiting with `Ctrl-C`
+
+### 4.1 Pipes
 
 ## Workspace Organization
 
