@@ -110,8 +110,6 @@ You can for example use `echo $a` which will print the value inside of variable 
 
 > Following, the list of non-implemented features in our tinyshell
 
-+ Changing Directories
-
 + 3.3 Return code of processus
 
 + 4.2 Redirection to or from a file
