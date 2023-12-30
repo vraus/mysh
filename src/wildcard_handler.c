@@ -2,6 +2,7 @@
 
 void execute_command_with_wildcards(char *pattern, char *command, char **args)
 {
+    printf("%s\n", command);
     DIR *dir = opendir(".");
     int i = 0;
     if (dir == NULL)

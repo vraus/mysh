@@ -2,6 +2,7 @@
 #include <sys/wait.h>
 #include <sys/shm.h>
 #include <sys/sem.h>
+#include <sys/stat.h>
 #include <ctype.h>
 #include <getopt.h>
 #include <signal.h>
@@ -12,6 +13,7 @@
 #include "../include/local_variables_handler.h"
 #include "../include/token_handler.h"
 #include "../include/local_variables_handler.h"
+#include "../include/wildcard_handler.h"
 
 #define COMMAND_LENGTH 2048
 
@@ -63,6 +65,28 @@ void setup_shared_memory()
         handle_error("shmat", -1);
 }
 
+int mycd(char *args[])
+{
+    char *directory = args[1];
+
+    struct stat dir_stat;
+    if (stat(directory, &dir_stat) == 0)
+    {
+        if (S_ISDIR(dir_stat.st_mode))
+        {
+            if (chdir(directory) != 0)
+                handle_error_noexit("cd: chdir()");
+        }
+        else
+        {
+            handle_error_noexit("Not a directory.");
+        }
+    }
+    else
+        handle_error_noexit("stat");
+    return 0;
+}
+
 /**
  * @brief Executes commands using execvp.
  * @param mask `int *` Bitmask indicating options for the myls command.
@@ -77,6 +101,11 @@ void execute_command(int *mask, char *args[], struct Variable *variables, struct
         // If wildcard characters are present, use execute_command_with_wildcards
         execute_command_with_wildcards(args[0], args[0], args);
         return;
+    }
+    else if (strcmp(args[0], "cd") == 0)
+    {
+        if (mycd(args) < 0)
+            handle_error_noexit("mycd");
     }
     else if (strcmp(args[0], "myls") == 0) // Check if the command is "myls"
     {
