@@ -55,6 +55,19 @@ The parent process `waits` for the child to finish before proceeding to the next
 
 The wildcard handling is implemented in the `execute_command_with_wildcards` function in the `wildcard_handler.c` file. It uses the `fnmatch` function to match the given pattern with the files in the current directory. If a match is found, a new process is forked to execute the command with the matched file as an argument.
 
+### 3.1 Changing Directories
+
+In our tinyshell implementation, we have incorporated the `cd` command to allow users to change their current working directory. The function `mycd` is responsible for handling this command. When the user enters a command starting with "`cd`," the program extracts the specified directory path and checks whether it is a valid directory.
+
+After extracting the directory path we check if this is indeed a directory using `struct stat dir_stat`. Then we use `chdir` function to change the current working directory. This is an example of it's usage:
+
+```bash
+/mysh> mkdir test
+/mysh> cd test
+/mysh/test> cd ../
+/mysh> exit
+```
+
 #### 3.4 myls
 
 The `myls` functionality is implemented as an external program in the `myls.c` file.
@@ -109,9 +122,21 @@ You can for example use `echo $a` which will print the value inside of variable 
 
 ## Bugs
 
-### 3.1 Changing Directories
+### Exiting using `exit` command after a `cd`
 
-As we did not make any external program to handle a `mycd`, any `cd` command is handled with `execvp` which doesn't work for this specific command inside the tinyshell.
+The following is an example of this bug :
+
+```bash
+/mysh> mkdir test
+/mysh> cd test
+/mysh/test> exit
+/mysh> exit
+> Problem during detachement of the mutex: Invalid argument
+```
+
+And then exits.
+
+When we try to exit the code in a different working directory than `/mysh>`, the exit function seems to go back to cd previous working directory instead of exiting the shell.
 
 ### 3.2 Exiting with `Ctrl-C`
 
