@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <stdbool.h>
 
 // colors for the prints
@@ -79,12 +80,12 @@ void hasOption(char **args, int *mask);
  * @brief Executes the "myls" command if entered by the user.
  * @param mask `int *` Bitmask indicating options for the myls command.
  */
-void is_myls(int *mask);
+void is_myls(int *mask, char *myls_realpath);
 
 /**
  * @brief Called by `execute_command` when the user enters `myps` in the terminal.
  * `myps` is an external program similar to the `ps aux` command in bash.
  */
-void is_myps();
+void is_myps(char *myps_realpath);
 
 #endif

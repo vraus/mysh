@@ -124,10 +124,10 @@ void hasOption(char **args, int *mask)
     }
 }
 
-void is_myls(int *mask)
+void is_myls(int *mask, char *myls_path)
 {
     char *myls_args[4];
-    myls_args[0] = "./external/myls";
+    myls_args[0] = myls_path;
 
     int arg_count = 1;
 
@@ -146,10 +146,10 @@ void is_myls(int *mask)
         handle_error("execvp", -1);
 }
 
-void is_myps()
+void is_myps(char *myps_path)
 {
     char *args[2];
-    args[0] = "./external/myps";
+    args[0] = myps_path;
     args[1] = NULL;
 
     // Execute external "myps" programm

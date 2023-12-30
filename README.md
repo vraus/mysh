@@ -136,6 +136,10 @@ And then exits.
 
 When we try to exit the code in a different working directory than `/mysh>`, the exit function seems to go back to cd previous working directory instead of exiting the shell.
 
+### Usage of `myls` / `myps` outside of `/mysh>` working directory
+
+The usage of these external
+
 ### 3.2 Exiting with `Ctrl-C`
 
 Exiting the tinyshell with `Ctrl-C` is allowed, threads, semaphores and shared memory are badly closed when using a `SIGINT`.

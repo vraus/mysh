@@ -26,6 +26,9 @@ int mutex, shmid;
 key_t shm_key;
 struct Variable *global_variables;
 
+char myls_realpath[512];
+char myps_realpath[512];
+
 struct sembuf P = {0, -1, 0};
 struct sembuf V = {0, +1, 0};
 
@@ -109,11 +112,11 @@ void execute_command(int *mask, char *args[], struct Variable *variables, struct
     }
     else if (strcmp(args[0], "myls") == 0) // Check if the command is "myls"
     {
-        hasOption(args, mask); // Parse options for the "myls" command
-        is_myls(mask);         // Execute the "myls" command with specified options
+        hasOption(args, mask);        // Parse options for the "myls" command
+        is_myls(mask, myls_realpath); // Execute the "myls" command with specified options
     }
     else if (strcmp(args[0], "myps") == 0) // Check if the command is "myps"
-        is_myps();                         // Execute the "myps" command
+        is_myps(myps_realpath);            // Execute the "myps" command
     else if (strcmp(args[0], "set") == 0)
     {
         if (args[1] != NULL && args[2] != NULL && args[3] != NULL)
@@ -189,6 +192,16 @@ int main()
     char input[COMMAND_LENGTH], *command[COMMAND_LENGTH], *args[20];
     int wstatus, command_count = 0;
     int mask = 0x000;
+
+    if (realpath("./external/myps", myps_realpath) == NULL)
+        handle_error("myps: realpath", -1);
+
+    printf("%s\n", myps_realpath);
+
+    if (realpath("./external/myls", myls_realpath) == NULL)
+        handle_error("myls: realpath", -1);
+
+    printf("%s\n", myls_realpath);
 
     pid_t bg_pid; // pid for background process
     for (;;)
