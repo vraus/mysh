@@ -7,9 +7,9 @@
 > **Contributions**:
 > |                      | Commits | Additions | Deletions | Global |
 > |:-------------------- |:-------:|:---------:|:---------:|-------:|
-> | **Ugo Courche**      |20 (26%) |1530 (43%) |479 (29%)  |**33%** |
-> |**Hadrien Belleville**|58 (74%) |2060 (57%) |1199 (71%) |**67%** |
-> | **Total**            |  **78** |  **3590** |  **1678** |**100%**|
+> | **Ugo Courche**      |20 (22%) |1530 (40%) |479 (27%)  |**32%** |
+> |**Hadrien Belleville**|69 (78%) |2250 (60%) |1256 (73%) |**68%** |
+> | **Total**            |  **89** |  **3780** |  **1735** |**100%**|
 
 ## Table of Content
 
@@ -33,13 +33,13 @@
 
 ## How to Use
 
-In order to use the `MySH` at the current state, you only have to run the following command.
+In order to use the `mysh`, you only have to run the following command.
 
 ```bash
 make && ./main
 ```
 
-You will then be able to access the prompt of the mysh. You don't have a lot of usable commands at this state of the project. Only the most basic UNIX commands you can think of, and the `myls` command that is supposed to work as a normal `ls` command.
+You will then be able to access the prompt of `mysh`. Implemented features are further detailed in the next section. The most of basics commands in UNIX are usually working due to usage of `execvp` by default.
 
 ## Features
 
@@ -55,7 +55,7 @@ The parent process `waits` for the child to finish before proceeding to the next
 
 The wildcard handling is implemented in the `execute_command_with_wildcards` function in the `wildcard_handler.c` file. It uses the `fnmatch` function to match the given pattern with the files in the current directory. If a match is found, a new process is forked to execute the command with the matched file as an argument.
 
-### 3.1 Changing Directories
+#### 3.1 Changing Directories
 
 In our tinyshell implementation, we have incorporated the `cd` command to allow users to change their current working directory. The function `mycd` is responsible for handling this command. When the user enters a command starting with "`cd`," the program extracts the specified directory path and checks whether it is a valid directory.
 
