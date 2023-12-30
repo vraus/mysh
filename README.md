@@ -70,7 +70,7 @@ After extracting the directory path we check if this is indeed a directory using
 
 #### 3.4 myls
 
-The `myls` functionality is implemented as an external program in the `myls.c` file.
+The `myls` functionality is implemented as an external program in the `myls.c` file. The realpath is initialized at the begining of the program using `realpath()` function, to avoid errors when using the `myls` or `myps` outside of default working directory.
 
 It opens the current directory, retrieves information about files and directories, and prints the details in a format similar to `ls -l`.
 
@@ -78,7 +78,7 @@ It also supports `-a` option for displaying hidden files, but `-R`, for recursiv
 
 #### 3.5 myps
 
-The `myps` functionality is implemented as an external program in the `myps.c` file.
+The `myps` functionality is implemented as an external program in the `myps.c` file. The realpath is initialized at the begining of the program using `realpath()` function, to avoid errors when using the `myls` or `myps` outside of default working directory.
 
 It reads information about each process from the `/proc/<pid>/status` and `/proc/<pid>/cmdline` files and prints following details: `UID`, `PID`, `PPID`, `STAT`, `NAME`, and `COMMAND`.
 
